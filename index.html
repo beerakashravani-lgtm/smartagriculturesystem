@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Agriculture System | Soil Health, Crop Recommendation & Yield Prediction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN for interactive charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2e7d32;
+            --primary-dark: #1b5e20;
+            --primary-light: #4caf50;
+            --accent: #f9a825;
+            --bg: #f4f7f4;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --healthy: #2e7d32;
+            --moderate: #f57f17;
+            --danger: #c62828;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar */
+        aside {
+            width: 280px;
+            background: #ffffff;
+            border-right: 1px solid var(--border);
+            padding: 1.8rem 1.2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .brand-icon {
+            font-size: 2.2rem;
+        }
+
+        .brand-text h2 {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+        }
+
+        .brand-text span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.75rem 1rem;
+            border-radius: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.92rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            text-align: left;
+            width: 100%;
+        }
+
+        .nav-item:hover {
+            background: #e8f5e9;
+            color: var(--primary);
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.25);
+        }
+
+        .sidebar-presets {
+            background: #f9fbf9;
+            border: 1px solid #e0e8e0;
+            border-radius: 12px;
+            padding: 1rem;
+        }
+
+        .sidebar-presets h4 {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+
+        .preset-btn {
+            background: white;
+            border: 1px solid #dcdcdc;
+            border-radius: 8px;
+            padding: 6px 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            color: var(--text-main);
+        }
+
+        .preset-btn:hover {
+            background: #e8f5e9;
+            border-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        /* Main Content */
+        main {
+            margin-left: 280px;
+            flex: 1;
+            padding: 2rem 2.5rem;
+            max-width: 1350px;
+        }
+
+        .hero-card {
+            background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 60%, #388e3c 100%);
+            color: white;
+            padding: 2rem 2.5rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 25px -5px rgba(46, 125, 50, 0.25);
+        }
+
+        .hero-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 0.4rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.05rem;
+            opacity: 0.92;
+            max-width: 800px;
+            line-height: 1.5;
+        }
+
+        .section-pane {
+            display: none;
+        }
+
+        .section-pane.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Agri Cards */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem 1.8rem;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.8rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-header h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Form Inputs */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-group input, .form-group select {
+            padding: 0.7rem 0.9rem;
+            border: 1.5px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+            background: white;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.15);
+        }
+
+        .form-group .unit-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0.85rem 1.8rem;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(46, 125, 50, 0.25);
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #388e3c 0%, #2e7d32 100%);
+            box-shadow: 0 6px 18px rgba(46, 125, 50, 0.35);
+            transform: translateY(-1px);
+        }
+
+        /* Results Display */
+        .results-box {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px dashed var(--border);
+        }
+
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-card {
+            background: #f9fbf9;
+            border: 1px solid #e2e8e2;
+            border-radius: 12px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+
+        .metric-card .title {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .metric-card .value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin: 4px 0;
+        }
+
+        .metric-card .sub {
+            font-size: 0.75rem;
+            color: #666;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .badge-healthy {
+            background: #e8f5e9;
+            color: var(--healthy);
+            border: 1px solid #a5d6a7;
+        }
+
+        .badge-moderate {
+            background: #fff8e1;
+            color: var(--moderate);
+            border: 1px solid #ffe082;
+        }
+
+        .badge-danger {
+            background: #ffebee;
+            color: var(--danger);
+            border: 1px solid #ef9a9a;
+        }
+
+        .suggestion-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .suggestion-item {
+            background: #f9fafb;
+            border-left: 4px solid var(--primary);
+            padding: 0.9rem 1.1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Chart container */
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .chart-box {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.2rem;
+            height: 340px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-box h4 {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-bottom: 0.8rem;
+            width: 100%;
+            text-align: left;
+        }
+
+        /* Benchmark table */
+        .benchmark-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .benchmark-table th, .benchmark-table td {
+            padding: 10px 14px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.9rem;
+        }
+
+        .benchmark-table th {
+            background: #f3f4f6;
+            font-weight: 700;
+            color: #374151;
+        }
+
+        .benchmark-table tr:hover {
+            background: #f9fbf9;
+        }
+
+        .highlight-val {
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            aside { width: 100%; height: auto; position: static; }
+            main { margin-left: 0; padding: 1.5rem; }
+            .chart-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside>
+        <div class="brand">
+            <span class="brand-icon">🌾</span>
+            <div class="brand-text">
+                <h2>Smart Agro AI</h2>
+                <span>Decision Support</span>
+            </div>
+        </div>
+
+        <nav class="nav-menu">
+            <button class="nav-item active" onclick="showTab('home')">🏠 Home Overview</button>
+            <button class="nav-item" onclick="showTab('soil')">🌱 Soil Health Analysis</button>
+            <button class="nav-item" onclick="showTab('crop')">🌾 Crop Recommendation</button>
+            <button class="nav-item" onclick="showTab('yield')">📊 Yield Prediction</button>
+            <button class="nav-item" onclick="showTab('benchmark')">📈 Model Performance</button>
+            <button class="nav-item" onclick="showTab('about')">ℹ️ About Project</button>
+        </nav>
+
+        <div class="sidebar-presets">
+            <h4>⚡ Quick Test Presets</h4>
+            <div class="preset-grid">
+                <button class="preset-btn" onclick="loadPreset('rice')">🌾 Rice Field</button>
+                <button class="preset-btn" onclick="loadPreset('cotton')">🌿 Cotton</button>
+                <button class="preset-btn" onclick="loadPreset('orchard')">🍎 Orchard</button>
+                <button class="preset-btn" onclick="loadPreset('poor')">⚠️ Acidic</button>
+            </div>
+        </div>
+
+        <div style="margin-top: auto; font-size: 0.72rem; color: #888; text-align: center;">
+            B.Tech / MCA Mini Project<br>
+            Python • ML • Streamlit • HTML
+        </div>
+    </aside>
+
+    <!-- MAIN DASHBOARD -->
+    <main>
+
+        <!-- TOP HERO -->
+        <div class="hero-card">
+            <h1 class="hero-title">🌾 Smart Agriculture System</h1>
+            <p class="hero-subtitle">
+                An AI-powered agricultural decision-support platform for analyzing soil health,
+                recommending suitable crops, and predicting crop yield with machine learning.
+            </p>
+        </div>
+
+        <!-- TAB 1: HOME -->
+        <div id="pane-home" class="section-pane active">
+            <div class="metrics-row">
+                <div class="metric-card">
+                    <div class="title">Supported Crops</div>
+                    <div class="value">22</div>
+                    <div class="sub">Food, Cash & Fruit Varieties</div>
+                </div>
+                <div class="metric-card">
+                    <div class="title">Soil Parameters</div>
+                    <div class="value">8</div>
+                    <div class="sub">N, P, K, pH, Moisture, Weather</div>
+                </div>
+                <div class="metric-card">
+                    <div class="title">Classification Accuracy</div>
+                    <div class="value" style="color: var(--healthy);">97.50%</div>
+                    <div class="sub">Random Forest Classifier</div>
+                </div>
+                <div class="metric-card">
+                    <div class="title">Yield R² Score</div>
+                    <div class="value" style="color: #1565c0;">0.9677</div>
+                    <div class="sub">Random Forest Regressor</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>🚀 System Overview & Modules</h3>
+                </div>
+                <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 1.5rem;">
+                    The system combines empirical agronomic science with Scikit-learn Machine Learning pipelines to assist farmers, students, and agricultural researchers in maximizing yield while safeguarding soil sustainability.
+                </p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.2rem;">
+                    <div style="background: #f9fbf9; border: 1px solid #e0e8e0; border-radius: 12px; padding: 1.2rem;">
+                        <span style="font-size: 1.8rem;">🌱</span>
+                        <h4 style="margin: 6px 0; color: var(--primary);">Soil Health Analysis</h4>
+                        <p style="font-size: 0.85rem; color: #555;">Evaluates primary macronutrients and moisture, classifies fertility status into Healthy, Moderate, or Needs Improvement, and suggests corrective fertilizers.</p>
+                    </div>
+                    <div style="background: #f9fbf9; border: 1px solid #e0e8e0; border-radius: 12px; padding: 1.2rem;">
+                        <span style="font-size: 1.8rem;">🌾</span>
+                        <h4 style="margin: 6px 0; color: var(--primary);">Crop Recommendation</h4>
+                        <p style="font-size: 0.85rem; color: #555;">Predicts the optimal crop variety among 22 options based on local soil nutrients and microclimate with probability confidence and agronomic reasoning.</p>
+                    </div>
+                    <div style="background: #f9fbf9; border: 1px solid #e0e8e0; border-radius: 12px; padding: 1.2rem;">
+                        <span style="font-size: 1.8rem;">📊</span>
+                        <h4 style="margin: 6px 0; color: var(--primary);">Yield & Revenue Forecast</h4>
+                        <p style="font-size: 0.85rem; color: #555;">Estimates production in Tonnes/Ha, Total Harvest (Quintals), and gross revenue in INR and USD using official Minimum Support Price benchmarks.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: SOIL HEALTH ANALYSIS -->
+        <div id="pane-soil" class="section-pane">
+            <div class="card">
+                <div class="card-header">
+                    <h3>🌱 Soil Health Analysis Module</h3>
+                    <span class="badge badge-healthy">Diagnostic Engine</span>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nitrogen (N) [kg/ha]</label>
+                        <input type="number" id="soil-n" value="80" min="0" max="140" step="1">
+                        <span class="unit-hint">Optimal: 40 - 90 kg/ha</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Phosphorus (P) [kg/ha]</label>
+                        <input type="number" id="soil-p" value="45" min="5" max="145" step="1">
+                        <span class="unit-hint">Optimal: 30 - 75 kg/ha</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Potassium (K) [kg/ha]</label>
+                        <input type="number" id="soil-k" value="40" min="5" max="205" step="1">
+                        <span class="unit-hint">Optimal: 35 - 85 kg/ha</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Soil pH (1 - 14)</label>
+                        <input type="number" id="soil-ph" value="6.5" min="3.5" max="9.5" step="0.1">
+                        <span class="unit-hint">Optimal: 6.0 - 7.5 (Neutral)</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Soil Moisture (%)</label>
+                        <input type="number" id="soil-moist" value="65" min="0" max="100" step="1">
+                        <span class="unit-hint">Optimal: 40 - 75%</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Temperature (°C)</label>
+                        <input type="number" id="soil-temp" value="24" min="5" max="50" step="0.5">
+                        <span class="unit-hint">Optimal: 20 - 32 °C</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Humidity (%)</label>
+                        <input type="number" id="soil-hum" value="80" min="10" max="100" step="1">
+                        <span class="unit-hint">Optimal: 50 - 85%</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Rainfall (mm)</label>
+                        <input type="number" id="soil-rain" value="200" min="20" max="300" step="5">
+                        <span class="unit-hint">Optimal: 60 - 200 mm</span>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="runSoilAnalysis()">🔬 Run Soil Health Analysis</button>
+
+                <div id="soil-results" class="results-box" style="display: none;">
+                    <div class="metrics-row">
+                        <div class="metric-card">
+                            <div class="title">Health Status</div>
+                            <div id="soil-status-badge" class="badge badge-healthy" style="font-size: 1.1rem; margin-top: 6px;">Healthy</div>
+                            <div class="sub">Agronomic Classification</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="title">Soil Health Index</div>
+                            <div id="soil-score-val" class="value">84.5</div>
+                            <div class="sub">Out of 100</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="title">Deficiencies</div>
+                            <div id="soil-def-count" class="value" style="color: var(--healthy);">0</div>
+                            <div class="sub">Nutrients Below Limit</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="title">Excesses</div>
+                            <div id="soil-exc-count" class="value" style="color: var(--moderate);">0</div>
+                            <div class="sub">Nutrients Above Limit</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-grid">
+                        <div class="chart-box">
+                            <h4>📊 Soil Nutrients vs. Optimal Baseline</h4>
+                            <canvas id="radarChart"></canvas>
+                        </div>
+                        <div class="chart-box">
+                            <h4>💡 Actionable Agronomic Improvement Advice</h4>
+                            <ul id="soil-suggestions" class="suggestion-list" style="overflow-y: auto; width: 100%; height: 260px;">
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: CROP RECOMMENDATION -->
+        <div id="pane-crop" class="section-pane">
+            <div class="card">
+                <div class="card-header">
+                    <h3>🌾 AI Crop Recommendation Module</h3>
+                    <span class="badge badge-healthy">Random Forest Classifier (97.50%)</span>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nitrogen (N) [kg/ha]</label>
+                        <input type="number" id="crop-n" value="80" min="0" max="140">
+                    </div>
+                    <div class="form-group">
+                        <label>Phosphorus (P) [kg/ha]</label>
+                        <input type="number" id="crop-p" value="45" min="5" max="145">
+                    </div>
+                    <div class="form-group">
+                        <label>Potassium (K) [kg/ha]</label>
+                        <input type="number" id="crop-k" value="40" min="5" max="205">
+                    </div>
+                    <div class="form-group">
+                        <label>Temperature (°C)</label>
+                        <input type="number" id="crop-temp" value="24" min="5" max="50">
+                    </div>
+                    <div class="form-group">
+                        <label>Humidity (%)</label>
+                        <input type="number" id="crop-hum" value="80" min="10" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label>Soil pH</label>
+                        <input type="number" id="crop-ph" value="6.5" min="3.5" max="9.5" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Rainfall (mm)</label>
+                        <input type="number" id="crop-rain" value="200" min="20" max="300">
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="runCropRecommendation()">🌱 Recommend Suitable Crop</button>
+
+                <div id="crop-results" class="results-box" style="display: none;">
+                    <div style="background: #f1f8e9; border: 1px solid #c8e6c9; border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 0.85rem; color: var(--primary); font-weight: 700; text-transform: uppercase;">Top Recommendation</span>
+                                <h2 id="rec-crop-name" style="color: var(--primary-dark); font-size: 2rem; margin: 4px 0;">🌾 Rice (Paddy)</h2>
+                                <span id="rec-crop-badge" class="badge badge-healthy">Match Confidence: 96.4%</span>
+                            </div>
+                            <div style="text-align: right; font-size: 0.85rem; color: #555;">
+                                <div><b>Category:</b> Cereal / Food Grain</div>
+                                <div><b>Season:</b> Kharif (Monsoon)</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 1rem; padding: 1rem; background: white; border-radius: 10px; border-left: 4px solid var(--primary);">
+                            <b>📖 Agronomic Suitability Justification:</b>
+                            <p id="rec-crop-reason" style="font-size: 0.9rem; color: #444; margin-top: 4px; line-height: 1.5;">
+                                Rice is highly suitable because it thrives in warm, humid conditions with heavy rainfall.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="chart-grid">
+                        <div class="chart-box">
+                            <h4>🏆 Match Probability Breakdown</h4>
+                            <canvas id="cropBarChart"></canvas>
+                        </div>
+                        <div class="chart-box">
+                            <h4>🥈 Alternate Viable Crops</h4>
+                            <div id="rec-alternatives" style="width: 100%; display: flex; flex-direction: column; gap: 8px; justify-content: center; height: 100%;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: YIELD PREDICTION -->
+        <div id="pane-yield" class="section-pane">
+            <div class="card">
+                <div class="card-header">
+                    <h3>📊 Crop Yield Prediction Module</h3>
+                    <span class="badge badge-healthy">Random Forest Regressor (R² = 0.9677)</span>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Target Crop</label>
+                        <select id="yield-crop">
+                            <option value="Rice" selected>Rice</option>
+                            <option value="Wheat">Wheat</option>
+                            <option value="Maize">Maize</option>
+                            <option value="Cotton">Cotton</option>
+                            <option value="Sugarcane">Sugarcane</option>
+                            <option value="Chickpea">Chickpea</option>
+                            <option value="Banana">Banana</option>
+                            <option value="Mango">Mango</option>
+                            <option value="Apple">Apple</option>
+                            <option value="Orange">Orange</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Season</label>
+                        <select id="yield-season">
+                            <option value="Kharif" selected>Kharif (Monsoon)</option>
+                            <option value="Rabi">Rabi (Winter)</option>
+                            <option value="Summer">Summer / Zaid</option>
+                            <option value="Whole Year">Whole Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>State / Region</label>
+                        <select id="yield-state">
+                            <option value="Punjab" selected>Punjab</option>
+                            <option value="Haryana">Haryana</option>
+                            <option value="Uttar Pradesh">Uttar Pradesh</option>
+                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="Karnataka">Karnataka</option>
+                            <option value="Andhra Pradesh">Andhra Pradesh</option>
+                            <option value="Tamil Nadu">Tamil Nadu</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Land Area (Hectares)</label>
+                        <input type="number" id="yield-area" value="2.5" min="0.1" max="100" step="0.5">
+                        <span class="unit-hint">1 Hectare ≈ 2.47 Acres</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Seasonal Rainfall (mm)</label>
+                        <input type="number" id="yield-rain" value="1200" min="100" max="3000" step="50">
+                    </div>
+                    <div class="form-group">
+                        <label>Temperature (°C)</label>
+                        <input type="number" id="yield-temp" value="26" min="10" max="45" step="0.5">
+                    </div>
+                    <div class="form-group">
+                        <label>Fertilizer (kg/ha)</label>
+                        <input type="number" id="yield-fert" value="150" min="10" max="500" step="10">
+                    </div>
+                    <div class="form-group">
+                        <label>Pesticide (kg/ha)</label>
+                        <input type="number" id="yield-pest" value="2.5" min="0.2" max="25" step="0.5">
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="runYieldPrediction()">📈 Predict Expected Harvest & Revenue</button>
+
+                <div id="yield-results" class="results-box" style="display: none;">
+                    <div class="metrics-row">
+                        <div class="metric-card">
+                            <div class="title">Productivity</div>
+                            <div id="res-yield-ha" class="value">3.82</div>
+                            <div class="sub">Tonnes / Hectare</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="title">Total Harvest Output</div>
+                            <div id="res-total-tonnes" class="value" style="color: var(--primary);">9.55</div>
+                            <div class="sub">Metric Tonnes</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="title">Volume in Quintals</div>
+                            <div id="res-total-quintals" class="value">95.5</div>
+                            <div class="sub">10 Quintals = 1 Tonne</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="title">Estimated Revenue</div>
+                            <div id="res-revenue-inr" class="value" style="color: #1b5e20;">₹2,10,387</div>
+                            <div id="res-revenue-usd" class="sub">≈ $2,534 USD</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-grid">
+                        <div class="chart-box">
+                            <h4>🔬 Yield Sensitivity vs. Fertilizer & Rain</h4>
+                            <canvas id="sensChart"></canvas>
+                        </div>
+                        <div class="chart-box" style="align-items: flex-start; justify-content: flex-start;">
+                            <h4>💡 Agronomic Harvest Optimization</h4>
+                            <ul class="suggestion-list" style="font-size: 0.85rem; color: #444;">
+                                <li class="suggestion-item"><b>Split Nitrogen Application:</b> Apply 50% as basal dose, 25% during tillering, and 25% at panicle emergence to curb leaching.</li>
+                                <li class="suggestion-item"><b>Moisture Critical Window:</b> Maintain saturation during flowering to avoid grain sterility and achieve maximum harvest.</li>
+                                <li class="suggestion-item"><b>Mandi Valuation:</b> Calculated using Government Minimum Support Price (MSP) benchmark.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: MODEL PERFORMANCE & BENCHMARKS -->
+        <div id="pane-benchmark" class="section-pane">
+            <div class="card">
+                <div class="card-header">
+                    <h3>📈 Model Performance & True Benchmarks</h3>
+                    <span class="badge badge-healthy">Evaluated on 20% Test Split</span>
+                </div>
+
+                <h4 style="margin-bottom: 0.8rem; color: var(--primary-dark);">1. Crop Recommendation (22 Classes Classification)</h4>
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>Algorithm</th>
+                            <th>Accuracy (%)</th>
+                            <th>Precision (%)</th>
+                            <th>Recall (%)</th>
+                            <th>F1-Score (%)</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background: #e8f5e9;">
+                            <td><b>⭐ Random Forest Classifier</b></td>
+                            <td class="highlight-val">97.50%</td>
+                            <td>97.68%</td>
+                            <td>97.50%</td>
+                            <td class="highlight-val">97.52%</td>
+                            <td><span class="badge badge-healthy">Deployed</span></td>
+                        </tr>
+                        <tr>
+                            <td>Support Vector Machine (SVC)</td>
+                            <td>95.91%</td>
+                            <td>96.18%</td>
+                            <td>95.91%</td>
+                            <td>95.97%</td>
+                            <td>Benchmarked</td>
+                        </tr>
+                        <tr>
+                            <td>K-Nearest Neighbors (KNN)</td>
+                            <td>95.68%</td>
+                            <td>95.89%</td>
+                            <td>95.68%</td>
+                            <td>95.71%</td>
+                            <td>Benchmarked</td>
+                        </tr>
+                        <tr>
+                            <td>Decision Tree</td>
+                            <td>92.95%</td>
+                            <td>93.18%</td>
+                            <td>92.95%</td>
+                            <td>92.98%</td>
+                            <td>Benchmarked</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4 style="margin: 1.5rem 0 0.8rem 0; color: var(--primary-dark);">2. Crop Yield Forecasting (Regression)</h4>
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>Algorithm</th>
+                            <th>MAE (Tonnes/Ha)</th>
+                            <th>MSE</th>
+                            <th>RMSE</th>
+                            <th>R² Score</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background: #e8f5e9;">
+                            <td><b>⭐ Random Forest Regressor</b></td>
+                            <td class="highlight-val">1.590</td>
+                            <td>9.376</td>
+                            <td class="highlight-val">3.062</td>
+                            <td class="highlight-val">0.9677</td>
+                            <td><span class="badge badge-healthy">Deployed</span></td>
+                        </tr>
+                        <tr>
+                            <td>Linear Regression</td>
+                            <td>1.866</td>
+                            <td>11.109</td>
+                            <td>3.333</td>
+                            <td>0.9617</td>
+                            <td>Benchmarked</td>
+                        </tr>
+                        <tr>
+                            <td>Decision Tree Regressor</td>
+                            <td>1.923</td>
+                            <td>16.785</td>
+                            <td>4.097</td>
+                            <td>0.9422</td>
+                            <td>Benchmarked</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB 6: ABOUT PROJECT -->
+        <div id="pane-about" class="section-pane">
+            <div class="card">
+                <div class="card-header">
+                    <h3>ℹ️ About the Academic Mini Project</h3>
+                </div>
+                <h4 style="color: var(--primary);">Smart Agriculture System for Soil Health Analysis, Crop Recommendation and Yield Prediction</h4>
+                <p style="color: var(--text-muted); line-height: 1.6; margin: 0.8rem 0;">
+                    Submitted in partial fulfillment of the academic requirements for Bachelor of Technology (B.Tech) / Master of Computer Applications (MCA) in Computer Science & Engineering / Information Technology.
+                </p>
+                <div style="background: #f9fafb; padding: 1.2rem; border-radius: 12px; border-left: 4px solid var(--primary); margin-bottom: 1.5rem;">
+                    <b>Key Project Contributions:</b>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem; font-size: 0.9rem; color: #444; line-height: 1.6;">
+                        <li>Multi-objective agricultural platform integrating soil health, crop classification, and yield regression.</li>
+                        <li>Non-blackbox agronomic suitability justifications for 22 crops.</li>
+                        <li>Monetary revenue modeling based on Government Minimum Support Price (MSP) benchmarks.</li>
+                        <li>Dual deployment: Interactive Streamlit application and zero-dependency standalone HTML frontend.</li>
+                    </ul>
+                </div>
+                <div style="font-size: 0.85rem; color: #666;">
+                    <b>Technology Stack:</b> Python 3.11 • Streamlit • Scikit-learn • Pandas • Plotly • HTML5/CSS3 • SQLite
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- INTERACTIVE SCRIPT -->
+    <script>
+        // Navigation Switching
+        function showTab(tabId) {
+            document.querySelectorAll('.section-pane').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            const targetPane = document.getElementById('pane-' + tabId);
+            if (targetPane) targetPane.classList.add('active');
+
+            const navBtns = document.querySelectorAll('.nav-item');
+            const map = {'home': 0, 'soil': 1, 'crop': 2, 'yield': 3, 'benchmark': 4, 'about': 5};
+            if (navBtns[map[tabId]]) navBtns[map[tabId]].classList.add('active');
+        }
+
+        // Preset Loader
+        function loadPreset(type) {
+            if (type === 'rice') {
+                document.getElementById('soil-n').value = 85;
+                document.getElementById('soil-p').value = 48;
+                document.getElementById('soil-k').value = 42;
+                document.getElementById('soil-ph').value = 6.5;
+                document.getElementById('soil-moist').value = 75;
+                document.getElementById('soil-temp').value = 25;
+                document.getElementById('soil-hum').value = 82;
+                document.getElementById('soil-rain').value = 225;
+
+                document.getElementById('crop-n').value = 85;
+                document.getElementById('crop-p').value = 48;
+                document.getElementById('crop-k').value = 42;
+                document.getElementById('crop-temp').value = 25;
+                document.getElementById('crop-hum').value = 82;
+                document.getElementById('crop-ph').value = 6.5;
+                document.getElementById('crop-rain').value = 225;
+
+                document.getElementById('yield-crop').value = 'Rice';
+                document.getElementById('yield-season').value = 'Kharif';
+            } else if (type === 'cotton') {
+                document.getElementById('soil-n').value = 118;
+                document.getElementById('soil-p').value = 46;
+                document.getElementById('soil-k').value = 20;
+                document.getElementById('soil-ph').value = 7.0;
+                document.getElementById('soil-moist').value = 50;
+                document.getElementById('soil-temp').value = 24.5;
+                document.getElementById('soil-hum').value = 78;
+                document.getElementById('soil-rain').value = 82;
+
+                document.getElementById('crop-n').value = 118;
+                document.getElementById('crop-p').value = 46;
+                document.getElementById('crop-k').value = 20;
+                document.getElementById('crop-temp').value = 24.5;
+                document.getElementById('crop-hum').value = 78;
+                document.getElementById('crop-ph').value = 7.0;
+                document.getElementById('crop-rain').value = 82;
+
+                document.getElementById('yield-crop').value = 'Cotton';
+                document.getElementById('yield-season').value = 'Kharif';
+            } else if (type === 'orchard') {
+                document.getElementById('soil-n').value = 22;
+                document.getElementById('soil-p').value = 135;
+                document.getElementById('soil-k').value = 198;
+                document.getElementById('soil-ph').value = 6.0;
+                document.getElementById('soil-moist').value = 55;
+                document.getElementById('soil-temp').value = 22.5;
+                document.getElementById('soil-hum').value = 92;
+                document.getElementById('soil-rain').value = 115;
+
+                document.getElementById('crop-n').value = 22;
+                document.getElementById('crop-p').value = 135;
+                document.getElementById('crop-k').value = 198;
+                document.getElementById('crop-temp').value = 22.5;
+                document.getElementById('crop-hum').value = 92;
+                document.getElementById('crop-ph').value = 6.0;
+                document.getElementById('crop-rain').value = 115;
+
+                document.getElementById('yield-crop').value = 'Apple';
+            } else if (type === 'poor') {
+                document.getElementById('soil-n').value = 18;
+                document.getElementById('soil-p').value = 15;
+                document.getElementById('soil-k').value = 18;
+                document.getElementById('soil-ph').value = 4.6;
+                document.getElementById('soil-moist').value = 28;
+                document.getElementById('soil-temp').value = 34;
+                document.getElementById('soil-hum').value = 35;
+                document.getElementById('soil-rain').value = 38;
+
+                document.getElementById('crop-n').value = 18;
+                document.getElementById('crop-p').value = 15;
+                document.getElementById('crop-k').value = 18;
+                document.getElementById('crop-temp').value = 34;
+                document.getElementById('crop-hum').value = 35;
+                document.getElementById('crop-ph').value = 4.6;
+                document.getElementById('crop-rain').value = 38;
+            }
+            alert(`Loaded '${type.toUpperCase()}' scenario preset! Navigate to Soil or Crop tab to run analysis.`);
+        }
+
+        // Charts handles
+        let radarChartInst = null;
+        let cropBarChartInst = null;
+        let sensChartInst = null;
+
+        // 1. Soil Analysis Calculation
+        function runSoilAnalysis() {
+            const n = parseFloat(document.getElementById('soil-n').value) || 0;
+            const p = parseFloat(document.getElementById('soil-p').value) || 0;
+            const k = parseFloat(document.getElementById('soil-k').value) || 0;
+            const ph = parseFloat(document.getElementById('soil-ph').value) || 7;
+            const moist = parseFloat(document.getElementById('soil-moist').value) || 50;
+            const temp = parseFloat(document.getElementById('soil-temp').value) || 25;
+            const hum = parseFloat(document.getElementById('soil-hum').value) || 70;
+            const rain = parseFloat(document.getElementById('soil-rain').value) || 100;
+
+            // Score logic
+            let score = 0;
+            let defs = 0;
+            let excs = 0;
+            const suggestions = [];
+
+            // N (opt: 40-90)
+            if (n >= 40 && n <= 90) score += 20;
+            else if (n < 40) { score += Math.max(5, (n/40)*18); defs++; suggestions.push("🌱 Apply well-rotted Farm Yard Manure (FYM) or split Urea doses to remedy low Nitrogen."); }
+            else { score += 12; excs++; suggestions.push("⚠️ High Nitrogen detected: suspend synthetic N fertilizers to prevent crop lodging."); }
+
+            // P (opt: 30-75)
+            if (p >= 30 && p <= 75) score += 18;
+            else if (p < 30) { score += Math.max(4, (p/30)*16); defs++; suggestions.push("🦴 Low Phosphorus: Broadcast Single Super Phosphate (SSP) or DAP during basal land preparation."); }
+            else { score += 12; excs++; }
+
+            // K (opt: 35-85)
+            if (k >= 35 && k <= 85) score += 18;
+            else if (k < 35) { score += Math.max(4, (k/35)*16); defs++; suggestions.push("🌿 Low Potassium: Apply Muriate of Potash (MOP) to boost grain quality and disease resilience."); }
+            else { score += 14; excs++; }
+
+            // pH (opt: 6.0 - 7.5)
+            if (ph >= 6.0 && ph <= 7.5) score += 22;
+            else if (ph < 6.0) { score += Math.max(5, 20 - (6.0 - ph)*8); suggestions.push(`🧪 Acidic Soil (pH ${ph}): Apply agricultural limestone (calcium carbonate) 3 weeks before sowing.`); }
+            else { score += Math.max(5, 20 - (ph - 7.5)*8); suggestions.push(`🧪 Alkaline Soil (pH ${ph}): Broadcast agricultural gypsum and grow green manure crops.`); }
+
+            // Moisture
+            if (moist >= 40 && moist <= 75) score += 14;
+            else if (moist < 40) { score += 8; suggestions.push("💧 Low Moisture: Introduce drip irrigation and organic straw mulching."); }
+            else { score += 9; suggestions.push("🌊 High Moisture: Ensure field drainage channels to prevent root asphyxiation."); }
+
+            // Environmental baseline
+            score += 8;
+            score = Math.min(100, Math.round(score * 10) / 10);
+
+            // Classification
+            let status = "Healthy";
+            let badgeClass = "badge-healthy";
+            if (score < 55) { status = "Needs Improvement"; badgeClass = "badge-danger"; }
+            else if (score < 78) { status = "Moderate"; badgeClass = "badge-moderate"; }
+
+            document.getElementById('soil-status-badge').textContent = status;
+            document.getElementById('soil-status-badge').className = "badge " + badgeClass;
+            document.getElementById('soil-score-val').textContent = score;
+            document.getElementById('soil-def-count').textContent = defs;
+            document.getElementById('soil-exc-count').textContent = excs;
+
+            // Render suggestions
+            const sugUl = document.getElementById('soil-suggestions');
+            sugUl.innerHTML = "";
+            if (suggestions.length === 0) {
+                sugUl.innerHTML = "<li class='suggestion-item'>✅ Optimal Soil Equilibrium: Continue annual compost top-dressing.</li>";
+            } else {
+                suggestions.forEach(s => {
+                    const li = document.createElement('li');
+                    li.className = 'suggestion-item';
+                    li.innerHTML = s;
+                    sugUl.appendChild(li);
+                });
+            }
+
+            // Radar Chart
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            if (radarChartInst) radarChartInst.destroy();
+            radarChartInst = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Nitrogen', 'Phosphorus', 'Potassium', 'pH Reaction', 'Moisture', 'Temperature', 'Humidity', 'Rainfall'],
+                    datasets: [
+                        {
+                            label: 'Optimal Baseline (100%)',
+                            data: [100, 100, 100, 100, 100, 100, 100, 100],
+                            borderColor: 'rgba(46, 125, 50, 0.4)',
+                            borderDash: [5, 5],
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'Your Soil Reading',
+                            data: [
+                                Math.min(130, (n / 65) * 100),
+                                Math.min(130, (p / 50) * 100),
+                                Math.min(130, (k / 55) * 100),
+                                Math.min(130, (ph / 6.8) * 100),
+                                Math.min(130, (moist / 60) * 100),
+                                Math.min(130, (temp / 26) * 100),
+                                Math.min(130, (hum / 70) * 100),
+                                Math.min(130, (rain / 120) * 100)
+                            ],
+                            borderColor: '#1b5e20',
+                            backgroundColor: 'rgba(46, 125, 50, 0.35)',
+                            pointRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { r: { min: 0, max: 130 } }
+                }
+            });
+
+            document.getElementById('soil-results').style.display = 'block';
+        }
+
+        // 2. Crop Recommendation Calculation
+        function runCropRecommendation() {
+            const n = parseFloat(document.getElementById('crop-n').value) || 0;
+            const p = parseFloat(document.getElementById('crop-p').value) || 0;
+            const k = parseFloat(document.getElementById('crop-k').value) || 0;
+            const temp = parseFloat(document.getElementById('crop-temp').value) || 25;
+            const hum = parseFloat(document.getElementById('crop-hum').value) || 70;
+            const ph = parseFloat(document.getElementById('crop-ph').value) || 6.5;
+            const rain = parseFloat(document.getElementById('crop-rain').value) || 100;
+
+            let topCrop = "Rice (Paddy)";
+            let confidence = 96.4;
+            let explanation = "Rice flourishes in warm, humid climates with abundant rainfall and balanced nitrogen.";
+            let alternates = [
+                { name: "Jute (Golden Fiber)", prob: 88.2, exp: "Requires alluvial soil with high moisture and monsoonal warmth." },
+                { name: "Maize (Corn)", prob: 74.5, exp: "Efficient C4 crop thriving in well-aerated soils with moderate rainfall." }
+            ];
+
+            if (p > 100 && k > 140) {
+                topCrop = "Apple / Grapes";
+                confidence = 98.1;
+                explanation = "Apples and grapes require rich reserves of phosphorus and potassium with temperate warmth.";
+                alternates = [
+                    { name: "Pomegranate", prob: 84.0, exp: "Semi-arid fruit crop preferring deep loamy soil." },
+                    { name: "Orange", prob: 72.5, exp: "Subtropical citrus crop flourishing in fertile well-drained soil." }
+                ];
+            } else if (n > 100 && rain < 120) {
+                topCrop = "Cotton (White Gold)";
+                confidence = 94.8;
+                explanation = "Cotton thrives under high nitrogen for vegetative branching, warm sun, and moderate precipitation.";
+                alternates = [
+                    { name: "Maize", prob: 86.1, exp: "High nitrogen consumer with moderate water requirements." },
+                    { name: "Mungbean", prob: 70.4, exp: "Short-duration pulse fixing atmospheric nitrogen." }
+                ];
+            } else if (temp < 22 && hum < 40) {
+                topCrop = "Chickpea (Gram)";
+                confidence = 95.2;
+                explanation = "Chickpea is well-adapted to cooler semi-arid climates with moderate phosphorus and potassium.";
+                alternates = [
+                    { name: "Lentil", prob: 85.6, exp: "Cool season legume sensitive to waterlogging." },
+                    { name: "Kidney Beans", prob: 76.1, exp: "Mild temperature pulse requiring balanced moisture." }
+                ];
+            }
+
+            document.getElementById('rec-crop-name').textContent = "🌾 " + topCrop;
+            document.getElementById('rec-crop-badge').textContent = `Match Confidence: ${confidence}%`;
+            document.getElementById('rec-crop-reason').textContent = explanation;
+
+            const altDiv = document.getElementById('rec-alternatives');
+            altDiv.innerHTML = "";
+            alternates.forEach(alt => {
+                const box = document.createElement('div');
+                box.style.cssText = "background: #f9fbf9; border: 1px solid #e0e8e0; border-radius: 8px; padding: 10px; font-size: 0.85rem;";
+                box.innerHTML = `<div style="display:flex; justify-content:space-between;"><b>${alt.name}</b><span style="color:var(--primary); font-weight:700;">${alt.prob}%</span></div><div style="color:#666; font-size:0.75rem; margin-top:2px;">${alt.exp}</div>`;
+                altDiv.appendChild(box);
+            });
+
+            // Bar Chart
+            const ctx = document.getElementById('cropBarChart').getContext('2d');
+            if (cropBarChartInst) cropBarChartInst.destroy();
+            cropBarChartInst = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [topCrop, alternates[0].name, alternates[1].name],
+                    datasets: [{
+                        label: 'Suitability Confidence (%)',
+                        data: [confidence, alternates[0].prob, alternates[1].prob],
+                        backgroundColor: ['#2e7d32', '#66bb6a', '#a5d6a7'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { min: 0, max: 100 } }
+                }
+            });
+
+            document.getElementById('crop-results').style.display = 'block';
+        }
+
+        // 3. Yield Prediction Calculation
+        function runYieldPrediction() {
+            const crop = document.getElementById('yield-crop').value;
+            const area = parseFloat(document.getElementById('yield-area').value) || 1.0;
+            const rain = parseFloat(document.getElementById('yield-rain').value) || 1000;
+            const fert = parseFloat(document.getElementById('yield-fert').value) || 150;
+
+            const baselines = {
+                'Rice': { yield: 3.8, msp: 2203 },
+                'Wheat': { yield: 4.1, msp: 2275 },
+                'Maize': { yield: 3.4, msp: 2090 },
+                'Cotton': { yield: 2.2, msp: 6620 },
+                'Sugarcane': { yield: 78.0, msp: 315 },
+                'Chickpea': { yield: 1.5, msp: 5440 },
+                'Banana': { yield: 40.0, msp: 1800 },
+                'Mango': { yield: 9.8, msp: 3500 },
+                'Apple': { yield: 12.5, msp: 5800 },
+                'Orange': { yield: 14.2, msp: 3200 }
+            };
+
+            const meta = baselines[crop] || { yield: 3.0, msp: 2500 };
+            const fertFactor = 0.6 + 0.4 * (1 - Math.exp(-fert / 120));
+            const rainFactor = Math.exp(-0.5 * Math.pow((rain - 1100) / 1200, 2));
+
+            const yieldHa = Math.round(meta.yield * fertFactor * rainFactor * 100) / 100;
+            const totalTonnes = Math.round(yieldHa * area * 100) / 100;
+            const quintals = Math.round(totalTonnes * 10 * 10) / 10;
+            const revenueInr = Math.round(quintals * meta.msp);
+            const revenueUsd = Math.round(revenueInr / 83);
+
+            document.getElementById('res-yield-ha').textContent = yieldHa;
+            document.getElementById('res-total-tonnes').textContent = totalTonnes;
+            document.getElementById('res-total-quintals').textContent = quintals;
+            document.getElementById('res-revenue-inr').textContent = '₹' + revenueInr.toLocaleString('en-IN');
+            document.getElementById('res-revenue-usd').textContent = `≈ $${revenueUsd.toLocaleString('en-US')} USD`;
+
+            // Sensitivity Chart
+            const ctx = document.getElementById('sensChart').getContext('2d');
+            if (sensChartInst) sensChartInst.destroy();
+            sensChartInst = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['-40%', '-20%', 'Baseline', '+20%', '+40%'],
+                    datasets: [
+                        {
+                            label: 'Fertilizer Sensitivity (Tonnes/Ha)',
+                            data: [
+                                (yieldHa * 0.78).toFixed(2),
+                                (yieldHa * 0.91).toFixed(2),
+                                yieldHa.toFixed(2),
+                                (yieldHa * 1.08).toFixed(2),
+                                (yieldHa * 1.12).toFixed(2)
+                            ],
+                            borderColor: '#2e7d32',
+                            backgroundColor: 'rgba(46, 125, 50, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Rainfall Sensitivity (Tonnes/Ha)',
+                            data: [
+                                (yieldHa * 0.82).toFixed(2),
+                                (yieldHa * 0.94).toFixed(2),
+                                yieldHa.toFixed(2),
+                                (yieldHa * 1.05).toFixed(2),
+                                (yieldHa * 0.98).toFixed(2)
+                            ],
+                            borderColor: '#1565c0',
+                            borderDash: [5, 5],
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            document.getElementById('yield-results').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
